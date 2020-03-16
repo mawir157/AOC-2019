@@ -28,7 +28,7 @@ printable x (c,r) = splitString (map (toChar) x) c
         splitString x n = [take n x] ++ splitString (drop n x) n
 
 main = do
-  f <- readFile "jmt_input_08.txt"
+  f <- readFile "input_08.txt"
   let s = parseInput . head $ lines f
   putStr "Part 1: "
   let l = layers s (25,6)

@@ -30,7 +30,7 @@ timeToPoint x y p = (length xtake) + (length ytake) + 2
         ytake = takeWhile (\x -> x /= p) y
 
 main = do
-  f <- readFile "jmt_input_03.txt"
+  f <- readFile "input_03.txt"
   let l = map (parseInput) $ lines f
   let k = map (wire origin) l
   let j = fastIntersect (head k) (last k)

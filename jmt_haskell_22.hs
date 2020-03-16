@@ -80,7 +80,7 @@ applyMeta :: (Integer, Integer, Integer) -> Integer -> Integer
 applyMeta (m, c, d) i = mod ((m * i) + c) d
 
 main = do 
-  f <- readFile "jmt_input_22.txt"
+  f <- readFile "input_22.txt"
   let t = parseInput $ lines f
 
   putStr "Part 1: "

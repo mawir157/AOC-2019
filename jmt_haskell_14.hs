@@ -73,7 +73,7 @@ binSearch f (lo, hi)
         n' = if' (f mid) (lo, mid) (mid, hi)
 
 main = do
-  f <- readFile "jmt_input_14.txt"
+  f <- readFile "input_14.txt"
   let q = map (parseInput) $ lines f
   putStr "Part 1: "
   putStrLn . show $ fuelToOre q 1

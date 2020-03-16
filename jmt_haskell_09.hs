@@ -72,7 +72,7 @@ runProgramme p
   where (ins, par) = getIntCodeMem p
 
 main = do
-  f <- readFile "jmt_input_09.txt"
+  f <- readFile "input_09.txt"
   let t = parseInput . head $ lines f
   let x = listToMemory 0 t
   let (x', i', o', ptr', rb') = runProgramme (x, [1], [], 0, 0)

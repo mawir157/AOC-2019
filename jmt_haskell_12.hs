@@ -53,7 +53,7 @@ starsReturn q = lcm nx $ lcm ny nz
         (_, nz) = closedOrbitSingle (thd' q) ((thd' q), 0)
 
 main = do
-  f <- readFile "jmt_input_12.txt"
+  f <- readFile "input_12.txt"
   let p = reparse . map (parseInput) $ lines f
   let p' = orbit p 1000
   putStr "Part 1: "

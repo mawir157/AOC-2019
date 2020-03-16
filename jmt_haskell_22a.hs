@@ -14,7 +14,7 @@ uM d(m,c)(s,k)
   |s=='s'=(-m,mod(c-m)d)
 
 main=do 
-  f<-readFile"jmt_input_22.txt"
+  f<-readFile"input_22.txt"
   let t=map pI$lines f
   putStr"Part 1: "
   let(p,q)=(10007,119315717514047)

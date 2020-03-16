@@ -15,7 +15,7 @@ runLengths (x:xs) = [z] ++ runLengths x'
 zipMap f x = zip x $ map (f) x
 
 main = do
-  let out = [x | x <- [171309..643603], password $ digits x]
+  let out = [x | x <- [240298..784956], password $ digits x]
   putStr "Part 1: "
   putStrLn . show $ length out
   let q = zipMap (\x -> 2 `elem` (runLengths $ digits x)) out

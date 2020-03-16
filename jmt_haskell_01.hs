@@ -9,7 +9,7 @@ getFuel2 x = if' (x <= 0) 0 (f + (getFuel2 f))
   where f = getFuel x
 
 main = do
-  f <- readFile "jmt_input_01.txt"
+  f <- readFile "input_01.txt"
   let s = map(parseInput) $ lines f
   putStr "Part 1: "
   let t = sum . map (getFuel) $ s

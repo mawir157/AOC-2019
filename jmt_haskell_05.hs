@@ -47,7 +47,7 @@ runProgramme (x, i, o, ptr)
   where (ins, par) = getIntCode x ptr
 
 main = do
-  f <- readFile "jmt_input_05.txt"
+  f <- readFile "input_05.txt"
   let x = parseInput . head $ lines f
 
   let (x', i', o', ptr') = runProgramme (x, [1], [], 0)

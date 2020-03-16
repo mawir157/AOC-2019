@@ -50,7 +50,7 @@ killAll x laser = (killable x laser) ++ (killAll x' laser)
   where x' = x \\ (killable x laser)
 
 main = do
-  f <- readFile "jmt_input_10.txt"
+  f <- readFile "input_10.txt"
   let s = lines f
   let t = parseInput (s) 0
   let r = zipMap (length . nub . diff t) t

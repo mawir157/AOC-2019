@@ -33,7 +33,7 @@ fromDigits = foldl addDigit 0
    where addDigit num d = 10*num + d
 
 main = do
-  f <- readFile "jmt_input_16.txt"
+  f <- readFile "input_16.txt"
   let p = parseInput . head $ lines f
   --let p = parseInput testInput7
   putStr "Part 1: "

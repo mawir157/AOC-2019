@@ -128,7 +128,7 @@ printHull h = map (buildRow c cols) [0..rows]
         rows = maximum $ map (snd) c
 
 main = do
-  f <- readFile "jmt_input_11.txt"
+  f <- readFile "input_11.txt"
   let t = parseInput . head $ lines f
   let x = listToMemory 0 t
 

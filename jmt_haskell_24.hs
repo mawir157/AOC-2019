@@ -25,7 +25,7 @@ bd t = sum $ zipWith (*) t p
   where p = take (g*g) $ iterate (*2) 1
 
 main = do
-  f <- readFile "jmt_input_24.txt"
+  f <- readFile "input_24.txt"
   let t = pa $ lines f
   putStr "Part 1: "
   putStrLn . show . fr . take 64 . map (bd) $ iterate (tk) t

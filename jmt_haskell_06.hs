@@ -31,7 +31,7 @@ transfers ss a b = (length a'') + (length b'') - 2
         b'' = takeWhile (\x -> x /= c) b'
 
 main = do
-    f <- readFile "jmt_input_06.txt"
+    f <- readFile "input_06.txt"
     let s = map (parseInput) $ lines f
     let t' = parseToTree s "COM"
     putStr "Part 1: "

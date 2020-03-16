@@ -68,7 +68,7 @@ chainProgrammes (x, i, o, ptr) n (y:ys) = chainProgrammes p' n' ys
 chainProgrammes p n [] = runProgramme p
 
 main = do
-  f <- readFile "jmt_input_07.txt"
+  f <- readFile "input_07.txt"
   let x = parseInput . head $ lines f
 
   let p =  permutations [0,1,2,3,4]

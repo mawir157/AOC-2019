@@ -26,7 +26,7 @@ setNounVerb p (n, v) = b
 n = [(x,y) | x <- [0..99], y <- [0..99]]
 
 main = do
-  f <- readFile "jmt_input_02.txt"
+  f <- readFile "input_02.txt"
   let s = parseInput . head $ lines f
   let p = setNounVerb s (12, 2)
   let o = head $ runProgramme 0 p
