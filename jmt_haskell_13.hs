@@ -30,9 +30,8 @@ clearOutput :: Prg -> Prg
 clearOutput (x, i, o, p, b) = (x, i, [], p, b)
 
 getIntCode :: Prg -> ([Integer], [Integer])
-getIntCode p = (ins, [p1,p2,p3,v1,v2,v3])
+getIntCode p = (ins, [v1,v2,v3])
   where ins = instructions $ (mem p)M.!(ptr p)
-        -- params = [(mem p)M.!(1 + ptr p), (mem p)M.!(2 + ptr p), (mem p)M.!(3 + ptr p)]
         p1 = (mem p)M.!(1 + ptr p)
         p2 = (mem p)M.!(2 + ptr p)
         p3 = (mem p)M.!(3 + ptr p)
@@ -47,7 +46,7 @@ getIntCode p = (ins, [p1,p2,p3,v1,v2,v3])
         v3
           | ins!!3 == 0 = p3
           | ins!!3 == 1 = 3 + ptr p
-          | ins!!3 == 2 = (base p + p2)
+          | ins!!3 == 2 = (base p + p3)
 
 getFromMem :: M.Map Integer Integer -> Integer -> Integer
 getFromMem mem n = if' (M.member n mem) (mem M.! n) 0
@@ -64,81 +63,91 @@ instructions n = [op, m1, m2, m3]
 
 applyIntCode :: Prg -> ([Integer], [Integer]) -> Prg
 applyIntCode (x, i, o, ptr, rbase) ([ic,i1,i2,i3], p)
-  | ic == 1 = (writeToMem x v3 (v1 + v2), i, o, ptr + 4, rbase)
-  | ic == 2 = (writeToMem x v3 (v1 * v2), i, o, ptr + 4, rbase)
-  | ic == 3 = (writeToMem x at (head i), tail i, o, ptr + 2, rbase)
-  | ic == 4 = (x, i, o ++ [v1], ptr + 2, rbase)
-  | ic == 5 = (x, i, o, if' (v1 /= 0) v2 (ptr + 3), rbase)
-  | ic == 6 = (x, i, o, if' (v1 == 0) v2 (ptr + 3), rbase)
-  | ic == 7 = (writeToMem x v3 $ if' (v1 <  v2) 1 0, i, o, ptr + 4, rbase)
-  | ic == 8 = (writeToMem x v3 $ if' (v1 == v2) 1 0, i, o, ptr + 4, rbase)
-  | ic == 9 = (x, i, o, ptr + 2, rbase + v1)
-  where p1 = p!!0
-        p2 = p!!1
-        p3 = p!!2
-        v1
-          | i1 == 0 = getFromMem x p1
-          | i1 == 1 = p1
-          | i1 == 2 = getFromMem x (rbase + p1)
-        v2
-          | i2 == 0 = getFromMem x p2
-          | i2 == 1 = p2
-          | i2 == 2 = getFromMem x (rbase + p2)
-        v3
-          | i3 == 0 = p3
-          | i3 == 2 = rbase + p3
-        at
-          | i1 == 0 = p1
-          | i1 == 2 = rbase + p1
+  | ic == 1 = (writeToMem x v3 (v1' + v2'), i, o, ptr + 4, rbase)
+  | ic == 2 = (writeToMem x v3 (v1' * v2'), i, o, ptr + 4, rbase)
+  | ic == 3 = (writeToMem x v1 (head i), tail i, o, ptr + 2, rbase)
+  | ic == 4 = (x, i, o ++ [v1'], ptr + 2, rbase)
+  | ic == 5 = (x, i, o, if' (v1' /= 0) v2' (ptr + 3), rbase)
+  | ic == 6 = (x, i, o, if' (v1' == 0) v2' (ptr + 3), rbase)
+  | ic == 7 = (writeToMem x v3 $ if' (v1' <  v2') 1 0, i, o, ptr + 4, rbase)
+  | ic == 8 = (writeToMem x v3 $ if' (v1' == v2') 1 0, i, o, ptr + 4, rbase)
+  | ic == 9 = (x, i, o, ptr + 2, rbase + v1')
+  where v1 = p!!0
+        v1' = getFromMem x v1
+        v2 = p!!1
+        v2' = getFromMem x v2
+        v3 = p!!2
 
 run :: Prg -> Prg
 run p 
   | head ins == 99 = p
   | (head ins == 3) && (length (inps p) == 0) = p -- run out of inputs
   | otherwise      = run p'
-  where (ins, par) = traceShowId $ getIntCode p
+  where (ins, par) = getIntCode p
         p' = applyIntCode p (ins, par)
 ---------------------------------------------------------------------------------
-pixels :: Prg -> [[Integer]]
+type Screen = [[Integer]]
+
+pixels :: Prg -> Screen
 pixels p = chunksOf 3 $ outs p
 
-score :: Prg -> Integer
-score p = s
-  where [_,_,s] = fromJust . find (\[x,_,_] -> x == -1) $ pixels p
+updateScreen :: Screen-> [Integer] -> Screen
+updateScreen xs [x',y',v'] = filter (\[x,y,_] -> x /= x' || y /= y') xs ++ [[x',y',v']]
 
-ball :: Prg -> (Integer, Integer)
-ball p = (x,y)
-  where [x,y,_] = fromJust . find (\[_,_,x] -> x == 4) $ pixels p
+score :: Screen -> Integer
+score scr = s
+  where [_,_,s] = fromJust . find (\[x,_,_] -> x == -1) . reverse $ scr
 
-paddle :: Prg -> [[Integer]]
-paddle p = filter (\[_,_,x] -> x == 3) $ pixels p
+ball :: Screen -> (Integer, Integer)
+ball scr = (x,y)
+  where [x,y,_] = fromJust . find (\[_,_,x] -> x == 4) . reverse $ scr
 
-runTimes :: Int -> Prg -> Prg
-runTimes n p
-  | n == 0    = p
-  | otherwise = runTimes (n-1) (run p)
+paddle :: Screen -> (Integer, Integer)
+paddle scr = (x,y)
+  where [x,y,_] = fromJust . find (\[_,_,x] -> x == 3) . reverse $ scr
+
+blockCount :: Screen -> Int
+blockCount s = length x
+  where x = filter (\[_,_,x] -> x == 2) $ s
+
+showStatus :: Screen -> ((Integer, Integer),(Integer, Integer),Integer,Int)
+showStatus s = (ball s, paddle s, score s, blockCount s)
+
+demoTick :: (Prg, Screen) -> (Prg, Screen)
+demoTick (p, s) = (p', s')
+  where bx = fst $ ball s -- ball x location
+        px = fst $ paddle s -- paddle y location
+        dx = signum (bx - px) -- ove paddle towards ball
+        p' = run . clearOutput $ appendInput p [dx] -- run with movement instruction
+        s' = foldl updateScreen s $ pixels p' -- rebuild creen
+
+demo :: (Prg, Screen) -> (Prg, Screen)
+demo (p,s)
+  | blockCount s == 0 = (p,s)
+  | otherwise         = demo $ demoTick (p,s)
 ---------------------------------------------------------------------------------
 main = do
   f <- readFile "input_13.txt"
   let t = parseInput . head $ lines f
   let memArr = M.fromList $ zip ([0,1..]) (t ++(replicate 1000 0))
-  -- putStr "Part 1: "
-  -- let prg = (memArr, [], [], 0, 0) :: Prg
-  -- let q = run prg
-  -- putStrLn . show . length $ filter (\[_,_,x] -> x == 2) $ pixels q
+  putStr "Part 1: "
+  let prg = (memArr, [], [], 0, 0) :: Prg
+  let q = run prg
+  putStrLn . show . length $ filter (\[_,_,x] -> x == 2) $ pixels q
 
-  putStrLn "Part 2: "
+
+  -- The way this works: The first run draws every pixel on the screen.
+  -- Subsequent runs only draw the pixels that change 
+  putStr "Part 2: "
   let memArr2 = writeToMem memArr 0 2
   let prg2 = (memArr2, [], [], 0, 0) :: Prg
-  putStrLn . show $ getIntCode prg2
-  let q2 = run prg2
-  -- putStrLn . show $ q2
-  putStrLn . show $ getIntCode q2
-  putStrLn . show $ score q2
-  putStrLn . show $ ball q2
-  putStrLn . show $ paddle q2
-  putStrLn . show $ base q2
-  -- let l = map (snd) $  M.toList (mem q2)
-  -- putStrLn $ show l
+  let p = run prg2
+  let s = pixels p
+  let (_,s') = demo (p, s)
+  putStrLn . show $ score s'
+
+
+
+
 
 
