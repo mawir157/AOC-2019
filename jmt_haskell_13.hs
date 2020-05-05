@@ -3,8 +3,6 @@ import Data.List
 import Data.List.Split
 import Data.Maybe
 
-import Debug.Trace
-
 if' True  x _ = x
 if' False _ y = y
 
@@ -119,7 +117,7 @@ demoTick (p, s) = (p', s')
         px = fst $ paddle s -- paddle y location
         dx = signum (bx - px) -- ove paddle towards ball
         p' = run . clearOutput $ appendInput p [dx] -- run with movement instruction
-        s' = foldl updateScreen s $ pixels p' -- rebuild creen
+        s' = foldl updateScreen s $ pixels p' -- rebuild screen changing the pixel
 
 demo :: (Prg, Screen) -> (Prg, Screen)
 demo (p,s)
@@ -134,7 +132,6 @@ main = do
   let prg = (memArr, [], [], 0, 0) :: Prg
   let q = run prg
   putStrLn . show . length $ filter (\[_,_,x] -> x == 2) $ pixels q
-
 
   -- The way this works: The first run draws every pixel on the screen.
   -- Subsequent runs only draw the pixels that change 

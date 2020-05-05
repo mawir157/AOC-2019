@@ -3,8 +3,6 @@ import Data.List
 import Data.List.Split
 import Data.Maybe
 
-import Debug.Trace
-
 if' True  x _ = x
 if' False _ y = y
 
