@@ -121,8 +121,8 @@ upper ((x,y):xs) (a, b) = (a*x >= b*y) && upper xs (a,b)
 type Rat = (Integer, Integer)
 type Pos = (Integer, Integer)
 
-square :: Integer -> (Rat, Rat) -> Pos
-square w ((al,bl),(au,bu)) = (x',y')
+square :: (Rat, Rat) -> Integer -> Pos
+square ((al,bl),(au,bu)) w = (x',y')
   where y' = (w * al * (au + bu)) `div` (au*bl - bu*al)
         x' = (w * bu * (al + bl)) `div` (au*bl - bu*al)
 
@@ -164,3 +164,5 @@ main = do
   putStrLn $ show $ l' -- 10/19 = 0.526315789 
 
   putStr "Part 2: "
+  let q = square (l', u') 1
+  putStrLn $ show q
