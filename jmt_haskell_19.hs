@@ -6,8 +6,6 @@ import Data.Maybe
 
 import Data.Char
 
-import GHC.Float
-
 if' True  x _ = x
 if' False _ y = y
 
@@ -109,6 +107,8 @@ putStrLines s = mapM_ print $ s
 
 rationals n = [ (p,n) | p <- [0..(n-1)], gcd p n == 1 ]
 
+buildGrid m n = [ (x,y) | x <- [m..n], y <- [m..n] ]
+
 -- a/b * x < y --> a*x < b*y
 lower :: [Pos] -> Rat -> Bool
 lower [] _ = True
@@ -126,14 +126,11 @@ square ((al,bl),(au,bu)) w = (x',y')
   where y' = (w * al * (au + bu)) `div` (au*bl - bu*al)
         x' = (w * bu * (al + bl)) `div` (au*bl - bu*al)
 
-vertices :: Integer -> Pos -> [Pos]
-vertices w (x,y) = [(x,y), (x+w,y), (x,y+w),(x+w,y+w)]
-
 isGood :: (Rat, Rat) -> Pos -> Bool
 isGood ((al,bl),(au,bu)) (x,y) = ((y * bl) >= (al * x)) && ((y * bu) <= (au * x))
 
-toFloat :: Rat -> Float
-toFloat (a,b) = rationalToFloat a b
+isGood2 :: (Rat, Rat) -> Integer -> Pos -> Bool
+isGood2 rats w (x,y)= (isGood rats (x+w,y)) && (isGood rats (x,y+w))
 ---------------------------------------------------------------------------------
 main = do
   f <- readFile "input_19.txt"
@@ -144,25 +141,31 @@ main = do
 
 
   putStr "part 1: "
-  let mx = 49
-  let grid = [ (x,y) | x <- [0..mx], y <- [0..mx] ]
-  let k = map (testPoint m) grid
-  let s = map (snd) $ filter (\(v,_) -> v == 1) $ zip k grid
-  putStrLn $ show $ sum k
+  let grid = buildGrid 0 49
+  -- let k = map (testPoint m) grid
+  -- let s = map (snd) $ filter (\(v,_) -> v == 1) $ zip k grid
+  let s = filter (\x -> testPoint m x == 1) grid
+  putStrLn $ show $ length s
 
   -- let p = printOutPut 50 k
   -- putStrLines p 
 
+  putStr "Part 2: "
+  let grid = buildGrid 0 400
+  let s = filter (\x -> testPoint m x == 1) grid
+
   -- tentative upper lower bounds on the beam edges
-  let rats = concat $ map rationals [1..100]
+  let rats = concat $ map rationals [1..400]
   let u = filter (upper s) rats
   let u' = minimumBy (\(a,b) (c,d) -> compare (a*d) (b*c)) u
-  putStrLn $ show $ u' -- 7/11 = 0.6363..
+  -- putStrLn $ show $ u' -- 155/243 = 0.637860082...
 
   let l = filter (lower s) rats
   let l' = maximumBy (\(a,b) (c,d) -> compare (a*d) (b*c)) l
-  putStrLn $ show $ l' -- 10/19 = 0.526315789 
+  -- putStrLn $ show $ l' -- 192/365 = 0.526315789 
 
-  putStr "Part 2: "
-  let q = square (l', u') 1
-  putStrLn $ show q
+  let grid2 = buildGrid 0 1400
+  let beam = filter (isGood (l',u')) grid2
+  -- 13530764
+  let a = head $ filter (isGood2 (l', u') 99) beam
+  putStrLn $ show ((fst a) * 10000 + (snd a))
