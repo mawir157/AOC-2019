@@ -138,17 +138,11 @@ main = do
   let memArr = M.fromList $ zip ([0,1..]) (t ++(replicate 1000 0))
   let m = (memArr, [], [], 0, 0)
 
-
-
   putStr "part 1: "
   let grid = buildGrid 0 49
-  -- let k = map (testPoint m) grid
-  -- let s = map (snd) $ filter (\(v,_) -> v == 1) $ zip k grid
+
   let s = filter (\x -> testPoint m x == 1) grid
   putStrLn $ show $ length s
-
-  -- let p = printOutPut 50 k
-  -- putStrLines p 
 
   putStr "Part 2: "
   let grid = buildGrid 0 400
