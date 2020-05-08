@@ -1,41 +1,21 @@
-import Data.List.Split
+import IntCode
 
-getAt xs n = head . (drop n) $ xs
-writeAt xs n p = take n xs ++ [p] ++ drop (n + 1) xs
-
-parseInput s = map (read) $ splitOn "," s :: [Int]
-
-getIntCode xs n = (take 4) . (drop n) $ xs
-
-applyIntCode p i
-  | head i == 1 = writeAt p v3 $ v1 + v2
-  | head i == 2 = writeAt p v3 $ v1 * v2
-  where v1 = getAt p $ getAt i 1
-        v2 = getAt p $ getAt i 2
-        v3 = getAt i 3
-
-runProgramme n p
-  | head i == 99 = p
-  | otherwise     = runProgramme (n + 4) $ applyIntCode p i
-  where i = getIntCode p n
-
-setNounVerb p (n, v) = b
-  where a = writeAt p 1 n
-        b = writeAt a 2 v
-
-n = [(x,y) | x <- [0..99], y <- [0..99]]
+setNounVerb :: Prg -> (Integer, Integer) -> Prg 
+setNounVerb p (n,v) = setReg (setReg p 1 n) 2 v
 
 main = do
-  f <- readFile "input_02.txt"
-  let s = parseInput . head $ lines f
-  let p = setNounVerb s (12, 2)
-  let o = head $ runProgramme 0 p
+  f <- readFile "input_02.txt"
+  let memArr = parseInput . head $ lines f
+  let m = (memArr, [], [], 0, 0)
+  let p  = setNounVerb m (12, 2)
+
   putStr "Part 1: "
-  putStrLn . show $ o
-  let q = map (setNounVerb s) n
-  let u = map (head) $ map (runProgramme 0) q
-  let z = zip u n
-  let k = head $ dropWhile (\x -> (fst x) /= 19690720) z
-  let t = 100 * (fst . snd $ k) + (snd . snd $ k)
+  putStrLn $ show $ getFromMem (mem $ run p) 0
+
   putStr "Part 2: "
-  putStrLn . show $ t
+  let nv = [(x,y) | x <- [0..99], y <- [0..99]]
+  let ps = map (run . setNounVerb m) nv
+  let q = map (\p -> getFromMem (mem $ run p) 0) ps
+  let z = zip q nv
+  let (_,(n,v)) = head $ dropWhile (\(i,_) -> i /= 19690720) z
+  putStrLn $ show (100 * n + v)
