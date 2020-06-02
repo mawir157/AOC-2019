@@ -100,60 +100,16 @@ runAStar stack (goal, current, openSet, cameFrom, gScore, fScore)
         fScore'   = insertTuples (map (\(t,_,p) -> (p,t + (d p goal))) gNhbrs) fScore 
         openSet'  = Set.delete current (Set.union openSet $ Set.fromList gNPos) 
 --------------------------------------------------------------------------------
-printRaw :: RawCave -> [Pos] -> String
-printRaw rc route = map (\x -> fromJust $ Map.lookup x rc) route
-
-parseToEdge :: String -> Maybe (Char, Int)
-parseToEdge [] = Nothing
-parseToEdge ss = Just (head next, 1 + length dots)
-  where dots = takeWhile (\c -> c == '.') ss
-        next = dropWhile (\c -> c == '.') ss
-
--- printString :: RawCave -> [Pos] -> String
--- printString rc route = printHelper ss
---   where ss = map (\x -> fromJust $ Map.lookup x rc) route
-
-undoString :: Char -> String -> (Char, Int)
-undoString c s
-  | length s /= 0 = (head next, (1 + (length dots)))
-  | otherwise     = (c, 0)
-  where dots = takeWhile (\c -> c == '.') s
-        next = dropWhile (\c -> c == '.') s
-
 undoString2 :: Char -> String -> (Char, (Int, String))
 undoString2 c s
   | length s /= 0 = (last s, (length s, locks))
   | otherwise     = (c, (0, ""))
   where locks = filter (`elem` ['A'..'Z']) $ filter ( /= '.' ) $ init s
 
--- printHelper :: String -> String
--- printHelper [] = []
--- printHelper s = " --" ++ (show $ (1 + length dots)) ++ "-> "  ++ [(head next)] ++ (printHelper $ drop 1 next) 
---   where dots = takeWhile (\c -> c == '.') s
---         next = dropWhile (\c -> c == '.') s
-
 getPaths :: Set.Set Pos -> KnD -> Char -> Char -> [(Integer, Integer)]
 getPaths op keys f t = aStar op from to
   where from = fromJust $ Map.lookup f keys
         to   = fromJust $ Map.lookup t keys
-
--- getAdjacentStr :: String -> RawCave ->  Set.Set Pos -> KnD -> Char -> [String]
--- getAdjacentStr symb rc op keys start = k
---   where k = map (printString rc) $ map (getPaths op keys start) symb
-
--- type Graph = Map.Map Char (Map.Map Char Int)
--- getAdjacent :: String ->  RawCave -> Set.Set Pos -> KnD -> Char -> Graph
--- getAdjacent symb rc open places start = Map.singleton start edgeMap
---   where edges = tedious symb rc open places start
---         edgeMap = Map.fromList $ filter (\(_,d) -> d > 0) edges      -- Map Char Int
-
--- buildAdjGraph :: String -> RawCave ->  Set.Set Pos -> KnD -> Graph
--- buildAdjGraph symb rc open keys = Map.unions $ map (getAdjacent symb rc open keys) symb
-
--- tedious :: [Char] -> RawCave -> Set.Set Pos -> KnD -> Char -> [(Char, Int)]
--- tedious symb rc op places from = map (undoString from) t'
---   where t = map (getPaths op places from) symb
---         t' = map (map (\x -> fromJust $ Map.lookup x rc)) t
 
 type Graph2 = Map.Map Char (Map.Map Char (Int, String))
 getAdjacent2 :: String ->  RawCave -> Set.Set Pos -> KnD -> Char -> Graph2
@@ -169,20 +125,29 @@ tedious2 symb rc op places from = map (undoString2 from) t'
   where t = map (getPaths op places from) (['a'..'z'] ++ ['@'])                 -- [[(Integer,Integer)]]
         t' = map (map (\x -> fromJust $ Map.lookup x rc)) t
 
+graphDist :: Graph2 -> String -> Char -> Int
+graphDist g visited to
+  | Map.member to redMap = fst (fromJust $ Map.lookup to redMap)
+  | otherwise            = 1000000
+  where cur = last visited -- Char
+        redMap = valid (fromJust $ Map.lookup cur g) visited -- Map.Map Char (Int, String)
+
 valid :: Map.Map Char (Int, String) -> String -> Map.Map Char (Int, String)
-valid m visited = Map.filter (\(_,s) -> length (s \\ vUpper) == 0) m
-  where vUpper = map (toUpper) visited
+valid m visited = Map.filter (\(_,s) -> checkDoors visited s) m
+
+checkDoors :: String -> String -> Bool
+checkDoors keys doors = length (doors \\ (map (toUpper) keys)) == 0
 --------------------------------------------------------------------------------
 main = do
-  let s =  ["#################",
-            "#i.G..c...e..H.p#",
-            "########.########",
-            "#j.A..b...f..D.o#",
-            "########@########",
-            "#k.E..a...g..B.n#",
-            "########.########",
-            "#l.F..d...h..C.m#",
-            "#################"]
+  -- let s =  ["#################",
+  --           "#i.G..c...e..H.p#",
+  --           "########.########",
+  --           "#j.A..b...f..D.o#",
+  --           "########@########",
+  --           "#k.E..a...g..B.n#",
+  --           "########.########",
+  --           "#l.F..d...h..C.m#",
+  --           "#################"]
   f <- readFile "input_18.txt"
   let s = lines f
 
@@ -192,55 +157,46 @@ main = do
   let indices = (['a'..'z']++['A'..'Z']++"@") 
   let open' = Set.union open (Set.fromList $ Map.elems places)
 
-  -- let graph = buildAdjGraph indices pp open' places
-  -- putStrLn $ show graph
-
   let graph2 = buildAdjGraph2 indices pp open' places
   putStrLn $ show graph2 
- 
-  let s = tour2 50 graph2 (Set.empty, "@", 0)
-  putStrLn $ show s
+
+  putStrLn $ show $ bestRoute graph2
+
+  -- putStrLn $ show $ allCities graph2
+  -- putStrLn $ show $ dHK graph2 "" '@' 'b'
+  -- putStrLn $ show $ dHK graph2 "" '@' 'm'
+  -- putStrLn $ show $ dHK graph2 "c" '@' 'm'
+  -- putStrLn $ show $ dHK graph2 "b" '@' 'm'
 
   putStrLn $ show "END"
+---------------------------- H-K Stuff------------------------------------------
+allCities :: Graph2 -> Set.Set Char
+allCities g = Set.fromList $ Map.keys g
 
--- type Graph = Map.Map Char (Map.Map Char Int)
-type TourState = (Set.Set Char, Char)
+-- type Graph2 = Map.Map Char (Map.Map Char (Int, String))
+dHK :: Graph2 -> String -> Char -> Char -> Int
+dHK g visted from to
+  | length locked == 0 = dist
+  | otherwise          = 1000000
+  where m = fromJust $ Map.lookup from g -- Map.Map Char (Int, String)
+        (dist, doors) = fromJust $ Map.lookup to m -- (Int, String)
+        locked = doors \\ (map (toUpper) visted) -- String
 
--- tour :: Int -> Graph -> (Set.Set TourState, TourState, Int)-> Int
--- tour timer graph (cover, (v, c), dist)
---   | timer == 0              = dist
---   | Set.size v == 16        = dist
---   | Set.member (v, c) cover = 1000000
---   | Map.size nbrsMap == 0   = 1000000
---   | otherwise               = minimum $ map (tour (timer - 1) graph) next
---   where !debugV = traceShowId $ (v, c, dist)
---         nbrsMap = fromJust $ Map.lookup c graph -- Map Char Int
---         nbrs = nbrsMap
---         nbrsChars = Map.keys nbrs                     -- [Char]
---         nbrsDists = Map.elems nbrs
---         v' = map (\s -> if' (s `elem` ['a'..'z']) (Set.insert s v) v) nbrsChars
---         -- v' = map (\s -> (Set.insert s v)) nbrsChars
---         ts' = zip v' nbrsChars
---         d' = map (\d -> dist + d) $ nbrsDists
---         c' = repeat $ Set.insert (v, c) cover
---         next = zip3 c' ts' d'
+bestRoute :: Graph2 -> Int
+bestRoute g = minimum $ map (minDistance g) pairs
+  where cities = Set.toList $ allCities g
+        pairs = [('@',y) | y <- cities]
 
-tour2 :: Int -> Graph2 -> (Set.Set String, String, Int)-> Int
-tour2 timer graph (cover, visited, dist)
-  | timer == 0              = dist
-  | length visited == 27    = dist
-  -- | Set.member (v, c) cover = 1000000
-  | Map.size nrbsGood == 0   = 1000000
-  | otherwise               = minimum $ map (tour2 (timer - 1) graph) next
-  where !debugV = traceShowId $ (visited,dist)
-        cur = last visited -- most recent node visited Char
-        nbrsMap = fromJust $ Map.lookup cur graph -- get all nbrs of cur
-        nbrsNew = foldr (\vt m -> Map.delete vt m) nbrsMap visited -- remove previously visited vertices
-        nrbsGood = valid nbrsNew visited -- remove blocked vertices
-        nbrsChars = Map.keys nrbsGood  -- the next vertices to visit [Char]
-        nbrsDists = map (fst) $ Map.elems nrbsGood  -- the distance to the next vertex [Int]
-        v' = map (\c -> visited ++ [c]) nbrsChars
-        d' = map (\d -> dist + d) $ nbrsDists
-        c' = repeat $ Set.insert visited cover
-        next = zip3 c' v' d'
+minDistance :: Graph2 -> (Char, Char) -> Int
+minDistance g (from, to) = hk g from (s',to,"")
+  where s = allCities g
+        s' = Set.delete from s
 
+hk :: Graph2 -> Char -> (Set.Set Char, Char, String) -> Int
+hk g from (via, to, visited)
+  | Set.size via == 1 = dHK g visited from to -- via = {to}
+  | otherwise         = minimum $ map (\(v,x,vst) -> (dHK g vst x to) + hk g from (v,x,vst)) dd
+  where via' = Set.delete to via -- Set City == S/c
+        visited' = traceShowId $ visited ++ [to]
+        dd = zip3 (repeat via') (Set.toList via') (repeat visited')-- [(Set City, City)] == [(S/c, x)]
+---------------------------- H-K Stuff------------------------------------------
